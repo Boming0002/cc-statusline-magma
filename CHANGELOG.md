@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-05-20
+
+### Improved
+
+- **Hardened `install.sh`** to catch silent failures users were hitting:
+  - Pre-flight validation: jq version printed, `~/.claude/` writability checked.
+  - Post-download checks: file size sanity (`> 100 bytes`) + `bash -n` syntax check on `statusline.sh` — catches corrupt / partial downloads.
+  - **Smoke test built into installer**: pipes a mock JSON through the script and verifies non-empty output before declaring success.
+  - JSON validation of `settings.json` **before** mutation (refuses to merge into malformed JSON; preserves user's broken file untouched).
+  - Post-merge verification: re-reads `.statusLine.command` and confirms it points to the installed script.
+- **Bold inverted-video "RESTART CLAUDE CODE" reminder** at the end (was dim text in v1.0–1.2, easy to miss).
+- Step-by-step progress output with `==>` headers + `✓` confirmations — diagnoses where things fail without `--verbose`.
+
+### Why
+
+Several users reported "installed but statusline doesn't show". Root causes were:
+1. They didn't restart Claude Code (now: prominent reminder)
+2. `curl` partial download produced a zero-byte / truncated `statusline.sh` (now: size + syntax check)
+3. Pre-existing malformed `settings.json` made `jq` merge fail silently (now: validate first, refuse on bad input)
+
 ## [1.2.0] — 2026-05-20
 
 ### Added
