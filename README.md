@@ -22,9 +22,29 @@ From left to right:
 | `↓112M ↑1.1M 106M cached` | Session cumulative: input tokens / output tokens / cache reads |
 | `$27.21` | Total session cost (USD) |
 
-The "Smooth-Magma" gradient (indigo → magenta → orange → yellow) is applied **by cell position, not by percentage** — so colour stays consistent across metrics and the leading edge shows magnitude. The labels (`ctx` / `5h` / `7d` / `⚡`) carry the good-vs-bad semantic instead.
+The default "Smooth-Magma" gradient (indigo → magenta → orange → yellow) is applied **by cell position, not by percentage** — so colour stays consistent across metrics and the leading edge shows magnitude. The labels (`ctx` / `5h` / `7d` / `⚡`) carry the good-vs-bad semantic instead.
 
 Empty cells (`▱`) are dimmed so the filled cells pop.
+
+## Themes
+
+Switch palette with the `STATUSLINE_THEME` environment variable:
+
+```bash
+export STATUSLINE_THEME=viridis   # ~/.bashrc or ~/.zshrc
+```
+
+| Theme | Palette | Vibe |
+|---|---|---|
+| `magma` *(default)* | dark indigo → magenta → orange → bright yellow | Matplotlib's magma — bold and warm |
+| `viridis` | dark purple → blue → teal → green → bright yellow | **Color-blind friendly** ([perceptually uniform](https://bids.github.io/colormap/)) |
+| `ocean` | deep navy → bright blue → light cyan → near-white | Cool aquatic |
+| `forest` | dark green → grass → pale lime | Warm natural |
+| `cyberpunk` | deep purple → magenta → hot pink → cyan → mint | Vapor-wave / neon, saturated chromatic clash |
+
+Unknown theme value silently falls back to `magma`.
+
+> **Accessibility note**: if you (or anyone reading over your shoulder) have red-green colour vision deficiency, prefer **`viridis`** — it stays perceptually uniform across the colour-blind spectrum, which `magma` does not.
 
 ## Requirements
 

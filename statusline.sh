@@ -74,14 +74,51 @@ if [[ "$H5_RESET" != "0" ]]; then
   fi
 fi
 
-# V11 "Smooth-Magma" gradient: dark indigo → magenta → orange → bright yellow.
-# Each cell colored by its position (0..9); leading edge shows magnitude.
-# Same palette for every metric — labels (ctx / 5h / 7d / ⚡) carry the
-# good-vs-bad semantic.
-GRADIENT=(
-  "30 10 70"   "60 15 110"  "95 25 140"  "130 35 150" "170 45 140"
-  "205 60 110" "230 80 70"  "245 115 40" "255 160 30" "255 215 20"
-)
+# 10-stop gradient. Each cell colored by its position (0..9); leading edge
+# shows magnitude. Same palette for every metric — labels (ctx / 5h / 7d / ⚡)
+# carry the good-vs-bad semantic.
+#
+# Switch theme with: export STATUSLINE_THEME=viridis  (or ocean / forest / cyberpunk)
+case "${STATUSLINE_THEME:-magma}" in
+  magma)
+    # Default. Dark indigo → magenta → orange → bright yellow.
+    GRADIENT=(
+      "30 10 70"   "60 15 110"  "95 25 140"  "130 35 150" "170 45 140"
+      "205 60 110" "230 80 70"  "245 115 40" "255 160 30" "255 215 20"
+    ) ;;
+  viridis)
+    # Color-blind friendly. Matplotlib's classic perceptually-uniform map.
+    # Dark purple → blue → teal → green → bright yellow.
+    GRADIENT=(
+      "68 1 84"    "72 35 116"  "64 67 135"  "52 94 141"  "41 120 142"
+      "32 144 140" "34 167 132" "94 201 97"  "173 220 53" "253 231 36"
+    ) ;;
+  ocean)
+    # Deep navy → bright blue → light cyan → near-white. Cool aquatic feel.
+    GRADIENT=(
+      "3 4 94"     "5 22 122"   "8 50 153"   "10 90 195"  "15 135 230"
+      "60 175 245" "120 205 250" "175 225 250" "215 240 252" "240 252 255"
+    ) ;;
+  forest)
+    # Dark forest → grass → pale lime. Warm natural feel.
+    GRADIENT=(
+      "10 40 16"   "20 70 28"   "35 100 40"  "50 130 55"  "75 160 70"
+      "110 190 90" "150 215 110" "190 230 130" "220 240 155" "245 248 180"
+    ) ;;
+  cyberpunk)
+    # Vapor-wave / neon. Deep purple → magenta → hot pink → cyan → mint.
+    # Saturated; intentional chromatic clash for that retro-future vibe.
+    GRADIENT=(
+      "30 0 60"    "80 0 130"   "140 0 180"  "200 0 220"  "240 30 200"
+      "255 70 150" "200 100 240" "100 200 255" "0 240 220" "0 255 150"
+    ) ;;
+  *)
+    # Unknown theme — fall back to magma silently.
+    GRADIENT=(
+      "30 10 70"   "60 15 110"  "95 25 140"  "130 35 150" "170 45 140"
+      "205 60 110" "230 80 70"  "245 115 40" "255 160 30" "255 215 20"
+    ) ;;
+esac
 
 render_bar() {
   local pct=$1
