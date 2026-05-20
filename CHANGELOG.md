@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] — 2026-05-20
+
+### Added
+
+- **Light terminal support** via `STATUSLINE_BG=light` environment variable.
+  - Each of the 5 themes now ships with a hand-tuned light-bg gradient that caps brightness — no fade-to-white that becomes invisible.
+  - Accent colours swap on light bg: `cyan` → `blue` for model name and token counts; `magenta` → `red` for cost.
+  - Default `STATUSLINE_BG=dark` preserves all existing behaviour.
+- Unknown `STATUSLINE_BG` values silently fall back to `dark`.
+
+### Changed
+
+- Theme + bg are now combined via `${THEME}_${BG}` case statement (10 valid combinations).
+- README has a new "Dark vs Light terminal" section with mix examples.
+
 ## [1.1.0] — 2026-05-20
 
 ### Added

@@ -46,6 +46,33 @@ Unknown theme value silently falls back to `magma`.
 
 > **Accessibility note**: if you (or anyone reading over your shoulder) have red-green colour vision deficiency, prefer **`viridis`** — it stays perceptually uniform across the colour-blind spectrum, which `magma` does not.
 
+## Dark vs Light terminal
+
+Default palette assumes a **dark terminal background**. If your terminal has a light/white background, set:
+
+```bash
+export STATUSLINE_BG=light   # ~/.bashrc or ~/.zshrc
+```
+
+What changes on light bg:
+
+- **Gradient cells** are capped in brightness — no fade to yellow/white that disappears against white background. Each theme has a hand-tuned light variant.
+- **Accent colours** swap: `cyan` model name → `blue`, `magenta` cost → `red`. Higher contrast on white.
+- **Dimmed empty cells** unchanged (`\033[2m` works on both backgrounds).
+
+Combine freely with `STATUSLINE_THEME`. Unknown values silently fall back to `magma_dark`.
+
+```bash
+# Dark terminal, viridis (default bg=dark)
+STATUSLINE_THEME=viridis
+
+# Light terminal, ocean
+STATUSLINE_THEME=ocean STATUSLINE_BG=light
+
+# Light terminal, default magma palette tuned for light
+STATUSLINE_BG=light
+```
+
 ## Requirements
 
 - **Claude Code ≥ 2.1.116** (earlier versions don't expose `context_window` / `rate_limits` / `cost` JSON fields)
