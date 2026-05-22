@@ -11,11 +11,11 @@ MODEL=$(echo "$MODEL_RAW" | sed -E \
   -e 's/Haiku /H/' \
   -e 's/ \(1M context\)/·1M/' \
   -e 's/ \(200K context\)/·200K/')
-CTX_PCT=$(echo "$INPUT" | jq -r '.context_window.used_percentage // 0')
+CTX_PCT=$(echo "$INPUT" | jq -r '(.context_window.used_percentage // 0) | floor')
 CTX_SIZE=$(echo "$INPUT" | jq -r '.context_window.context_window_size // 0')
-H5_PCT=$(echo "$INPUT" | jq -r '.rate_limits.five_hour.used_percentage // 0')
+H5_PCT=$(echo "$INPUT" | jq -r '(.rate_limits.five_hour.used_percentage // 0) | floor')
 H5_RESET=$(echo "$INPUT" | jq -r '.rate_limits.five_hour.resets_at // 0')
-D7_PCT=$(echo "$INPUT" | jq -r '.rate_limits.seven_day.used_percentage // 0')
+D7_PCT=$(echo "$INPUT" | jq -r '(.rate_limits.seven_day.used_percentage // 0) | floor')
 COST=$(echo "$INPUT" | jq -r '.cost.total_cost_usd // 0')
 TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // ""')
 
