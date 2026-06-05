@@ -4,6 +4,14 @@
 
 INPUT=$(cat)
 
+# jq is required. If it's missing at runtime (e.g. the script was copied to a
+# machine without it), emit a short notice instead of a broken half-line, and
+# exit 0 so Claude Code still renders something rather than blanking the line.
+if ! command -v jq >/dev/null 2>&1; then
+  printf 'statusline: jq not found — see cc-statusline-magma README'
+  exit 0
+fi
+
 MODEL_RAW=$(echo "$INPUT" | jq -r '.model.display_name // "?"')
 MODEL=$(echo "$MODEL_RAW" | sed -E \
   -e 's/Opus /O/' \
@@ -26,9 +34,20 @@ CACHE_PCT=0
 CACHE_READ_TOTAL=0
 IN_TOTAL=0
 OUT_TOTAL=0
+# On Git Bash / MSYS (Windows), Claude Code passes a Windows-style transcript
+# path (e.g. C:\Users\...) that bash cannot stat directly. cygpath (bundled with
+# Git Bash) rewrites it to a POSIX path. On macOS/Linux cygpath is absent, so
+# this block is skipped and TRANSCRIPT is left untouched — no behaviour change.
+if [[ -n "$TRANSCRIPT" ]] && command -v cygpath >/dev/null 2>&1; then
+  TRANSCRIPT=$(cygpath -u "$TRANSCRIPT" 2>/dev/null || printf '%s' "$TRANSCRIPT")
+fi
+
 if [[ -n "$TRANSCRIPT" && -f "$TRANSCRIPT" ]]; then
+  # Aggregate usage from the MAIN thread only — exclude subagent/Task entries
+  # (isSidechain: true). Including them inflates the cumulative token totals and
+  # can let a subagent's last turn drive the displayed "last turn" cache-hit %.
   CACHE_STATS=$(jq -rs '
-    [.[] | select(.message.usage != null) | .message.usage] as $u
+    [.[] | select(.message.usage != null) | select((.isSidechain // false) | not) | .message.usage] as $u
     | ($u[-1] // {}) as $last
     | (($last.cache_read_input_tokens // 0)
        + ($last.cache_creation_input_tokens // 0)
@@ -54,6 +73,9 @@ fi
 
 fmt_tokens() {
   local n=$1
+  # Token counts are integers in practice, but a non-integer value here would
+  # make the (( )) comparisons below a hard arithmetic syntax error. Coerce.
+  [[ "$n" =~ ^[0-9]+$ ]] || n=0
   if (( n >= 1000000 )); then
     printf '%.1fM' "$(echo "$n" | awk '{print $1/1000000}')"
   elif (( n >= 1000 )); then
@@ -64,7 +86,10 @@ fmt_tokens() {
 }
 
 H5_LEFT=""
-if [[ "$H5_RESET" != "0" ]]; then
+# resets_at is expected to be epoch seconds. Guard against a non-numeric value
+# (e.g. an ISO-8601 timestamp) so it never reaches $(( )) — an invalid value
+# there throws a per-render arithmetic error to stderr and drops the countdown.
+if [[ "$H5_RESET" =~ ^[0-9]+$ && "$H5_RESET" != "0" ]]; then
   NOW=$(date +%s)
   DIFF=$(( H5_RESET - NOW ))
   if (( DIFF > 0 )); then

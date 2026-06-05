@@ -43,14 +43,29 @@ fi
 step "Checking jq"
 if ! command -v jq >/dev/null 2>&1; then
   warn "jq not found, attempting to install"
+  # Escalate only when needed: nothing as root, otherwise sudo -n (never prompt —
+  # in a piped curl|bash there's no TTY, so a blocking prompt would hang/fail).
+  SUDO=""
+  if [[ "$(id -u)" -ne 0 ]] && command -v sudo >/dev/null 2>&1; then SUDO="sudo -n"; fi
+  # set -e is suspended around the attempt so a blocked/failed install falls
+  # through to the friendly check below instead of aborting cryptically.
+  set +e
   if   command -v brew    >/dev/null 2>&1; then HOMEBREW_NO_AUTO_UPDATE=1 brew install jq
-  elif command -v apt-get >/dev/null 2>&1; then sudo apt-get update && sudo apt-get install -y jq
-  elif command -v yum     >/dev/null 2>&1; then sudo yum install -y jq
-  elif command -v dnf     >/dev/null 2>&1; then sudo dnf install -y jq
-  elif command -v apk     >/dev/null 2>&1; then sudo apk add jq
-  else die "No supported package manager. Install jq manually then re-run."
+  elif command -v winget  >/dev/null 2>&1; then winget install --id jqlang.jq -e --accept-source-agreements --accept-package-agreements
+  elif command -v scoop   >/dev/null 2>&1; then scoop install jq
+  elif command -v choco   >/dev/null 2>&1; then choco install -y jq
+  elif command -v pacman  >/dev/null 2>&1; then $SUDO pacman -S --noconfirm jq            # MSYS2 / Git Bash
+  elif command -v apt-get >/dev/null 2>&1; then $SUDO apt-get update; $SUDO apt-get install -y jq
+  elif command -v yum     >/dev/null 2>&1; then $SUDO yum install -y jq
+  elif command -v dnf     >/dev/null 2>&1; then $SUDO dnf install -y jq
+  elif command -v apk     >/dev/null 2>&1; then $SUDO apk add jq
+  else warn "no supported package manager found"
   fi
-  command -v jq >/dev/null 2>&1 || die "jq install reported success but binary still not on PATH"
+  set -e
+  command -v jq >/dev/null 2>&1 || die "jq is required but could not be auto-installed.
+    Install it manually — https://jqlang.org/download/
+    Windows: winget install jqlang.jq  |  scoop install jq  |  choco install jq
+    Then re-run this installer."
 fi
 ok "jq $(jq --version)"
 
@@ -91,9 +106,20 @@ fi
 jq empty "$SETTINGS_PATH" 2>/dev/null \
   || die "$SETTINGS_PATH is not valid JSON — fix it manually before re-running"
 
-backup="${SETTINGS_PATH}.bak.$(date +%s)"
+# Single rolling backup (overwritten each run) — avoids piling up .bak.<epoch>
+# files in ~/.claude on repeated installs.
+backup="${SETTINGS_PATH}.bak"
 cp "$SETTINGS_PATH" "$backup"
-info "backup: $backup"
+info "backup: $backup (previous settings.json)"
+
+# Warn before clobbering a different, pre-existing statusLine so the user knows
+# their custom config was replaced (and where to recover it).
+existing_cmd=$(jq -r '.statusLine.command // ""' "$SETTINGS_PATH")
+if [[ -n "$existing_cmd" && "$existing_cmd" != "$SCRIPT_DEST" ]]; then
+  warn "Replacing an existing statusLine command"
+  info "was: $existing_cmd"
+  info "now: $SCRIPT_DEST   (previous config saved in $backup)"
+fi
 
 tmp=$(mktemp)
 jq --arg cmd "$SCRIPT_DEST" \

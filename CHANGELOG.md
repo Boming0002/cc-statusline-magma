@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-06-05
+
+### Added
+
+- **Windows support**, in two paths that match how Claude Code runs the status line on Windows (through Git Bash if installed, otherwise PowerShell):
+  - `statusline.ps1` — a PowerShell port for Windows **without** Git Bash. No `jq` dependency (parses JSON natively via `ConvertFrom-Json`), targets **both Windows PowerShell 5.1 and PowerShell 7+**, and renders identically to the bash version (same gradients, same `STATUSLINE_THEME` / `STATUSLINE_BG` knobs). Source is pure ASCII (glyphs built from code points) so no UTF-8 BOM is needed on 5.1.
+  - `install.ps1` — PowerShell installer (`irm … | iex` or `-File .\install.ps1`): copies the script, smoke-tests it, and merges the `statusLine` block into `settings.json` (written UTF-8 **without BOM**) using a forward-slash `powershell -NoProfile -File …` command.
+  - `install.sh` now also resolves `jq` via `winget` / `scoop` / `choco` / `pacman` (Windows / MSYS), alongside `brew` / `apt` / `yum` / `dnf` / `apk`.
+- `.gitattributes` normalises line endings (`* text=auto`) and pins `*.sh` / `*.ps1` / `*.md` to LF — chiefly so a CRLF checkout on Windows can't turn the bash shebang into `bash\r` (`bad interpreter`).
+- README: **Windows** section (both paths) and an **Uninstall** section.
+
+### Fixed
+
+- **Cache / token stats now count the main thread only.** The transcript reduction excludes subagent/Task entries (`isSidechain: true`), which previously inflated the cumulative `↓in` / `↑out` / `cached` totals and could let a subagent's turn drive the displayed last-turn cache-hit %.
+- **`statusline.sh` no longer errors when `resets_at` is non-numeric.** A digit guard ensures only an epoch-seconds value reaches the countdown arithmetic, so an ISO-8601 timestamp can't emit a per-render `$(( ))` error or silently drop the countdown.
+- Under Git Bash, `statusline.sh` translates the Windows `transcript_path` via `cygpath`, so cache/token stats work there (the Windows-style path couldn't be `stat`-ed before, zeroing those fields).
+
+### Changed / Hardened
+
+- `install.sh`: `jq` auto-install now uses `sudo -n` (never blocks on a password prompt in a piped `curl | bash`) and skips `sudo` when running as root or when it's absent; **warns before replacing a *different* existing `statusLine`**; keeps a single rolling `settings.json.bak` instead of accumulating `.bak.<epoch>` files on every run.
+- `statusline.sh`: `fmt_tokens` coerces a non-integer argument to `0` (defensive); a missing `jq` at runtime now prints a short notice instead of a broken half-line.
+
+### Docs
+
+- Corrected the README example and field table to match the **actual** output: model is abbreviated to `O4.7·1M` (`Opus`→`O`, `Sonnet`→`S`, `Haiku`→`H`; context suffix `·1M` / `·200K` — previously undocumented), token totals carry the `.0` decimal (`106.0M`), percentages are right-aligned to 3 chars, and the cumulative totals are main-thread only.
+
 ## [1.2.1] — 2026-05-20
 
 ### Improved

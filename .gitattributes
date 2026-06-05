@@ -1,0 +1,8 @@
+# Normalise line endings. Shell scripts MUST stay LF: with core.autocrlf=true a
+# CRLF checkout on Windows turns the shebang into "#!/usr/bin/env bash\r", and
+# bash then looks for an interpreter literally named "bash\r" ("bad interpreter").
+* text=auto
+
+*.sh   text eol=lf
+*.ps1  text eol=lf
+*.md   text eol=lf
